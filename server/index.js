@@ -7,24 +7,41 @@ const UserData = require('./data/user.data');
 const cors = require('cors');
 const mongoose = require('./models/mongo.config');
 
+
 if (!Object.keys(mongoose).length) return;
 
 app.use(cors());
 
 app.use(bodyParser.urlencoded({ extended: true }));
 
+app.use(express.json()); //important for using json format
+
 app.get('/', (req, res) =>
   res.send('Welcome to semicolon academy APIs, use /video-request to get data')
 );
 
 app.post('/video-request', async (req, res, next) => {
+  console.log(req.body)
   const response = await VideoRequestData.createRequest(req.body);
   res.send(response);
   next();
 });
 
 app.get('/video-request', async (req, res, next) => {
+  const { sortBy } = req.query
   const data = await VideoRequestData.getAllVideoRequests();
+  if ( sortBy === 'topVoted') { 
+    data = data.sort((prev, next) => {
+      if (
+        prev.votes.ups - prev.votes.downs >
+        next.votes.ups - next.votes.downs
+      ) {
+        return -1;
+      } else {
+        return 1;
+      }
+    });
+  }
   res.send(data);
   next();
 });
@@ -41,7 +58,7 @@ app.post('/users/login', async (req, res, next) => {
   next();
 });
 
-app.use(express.json());
+
 
 app.put('/video-request/vote', async (req, res, next) => {
   const { id, vote_type } = req.body;
