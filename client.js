@@ -14,9 +14,9 @@ function getSingleVidReq(vidInfo) {
               </p>
             </div>
             <div class="d-flex flex-column text-center">
-              <a class="btn btn-link" id="votes_ups">🔺</a>
-              <h3 id="score_vote">0</h3>
-              <a class="btn btn-link" id="votes_downs">🔻</a>
+              <a class="btn btn-link" id="votes_ups_${vidInfo._id}">🔺</a>
+              <h3 id="score_vote_${vidInfo._id}">${ vidInfo.votes.up - vidInfo.votes.downs }</h3>
+              <a class="btn btn-link" id="votes_downs_${vidInfo._id}">🔻</a>
             </div>
           </div>
           <div class="card-footer d-flex flex-row justify-content-between">
@@ -49,7 +49,7 @@ document.addEventListener('DOMContentLoaded', function() {
     //task1 for submission 
     formVidReqElm.addEventListener('submit', (e) => {
         e.preventDefault()
-
+        
         fetch('http://localhost:7777/video-request', {
             method: 'POST',
             body: JSON.stringify({  
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 expected_result: formVidReqElm.expected_result.value,
                 target_level: formVidReqElm.target_level.value
             }),
-        })
+        })//fetch return a promise
         .then((bold) => bold.json())
         .then((data) => { console.log(data) })
     })
@@ -72,13 +72,34 @@ document.addEventListener('DOMContentLoaded', function() {
     .then((data) => {
         data.forEach((vidInfo)=> {
             listOfVidsElm.appendChild(getSingleVidReq(vidInfo))
-
-            const voteUpsElm = document.getElementById('votes_ups')
-            const voteDownsElm = document.getElementById('votes_downs')
-            const scoreVoteElm = document.getElementById('score_vote')
+            
+            //task3 votes ups&downs&score
+            const voteUpsElm = document.getElementById(`votes_ups_${vidInfo._id}`)
+            const voteDownsElm = document.getElementById(`votes_downs_${vidInfo._id}`)
+            const scoreVoteElm = document.getElementById(`score_vote_${vidInfo._id}`)
 
             voteUpsElm.addEventListener('click', (e) => {
-              console.log(e)
+              fetch('http://localhost:7777/video-request/vote', {
+                method: 'PUT',
+                headers: { 'content-Type': 'application/json'},
+                body: JSON.stringify({ id: vidInfo._id, vote_type: 'ups'}), 
+              })
+              .then((bold) => bold.json())
+              .then((data) => {
+                scoreVoteElm.innerText = data.ups - data.downs
+              })
+            })
+
+            voteDownsElm.addEventListener('click', (e) => {
+              fetch('http://localhost:7777/video-request/vote', {
+                method: 'PUT',
+                headers: { 'content-Type': 'application/json'},
+                body: JSON.stringify({ id: vidInfo._id, vote_type: 'downs'}), 
+              })
+              .then((bold) => bold.json())
+              .then((data) => {
+                scoreVoteElm.innerText = data.ups - data.downs
+              })
             })
         })
     })
