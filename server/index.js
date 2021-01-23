@@ -29,7 +29,7 @@ app.post('/video-request', async (req, res, next) => {
 
 app.get('/video-request', async (req, res, next) => {
   const { sortBy } = req.query
-  const data = await VideoRequestData.getAllVideoRequests();
+  let data = await VideoRequestData.getAllVideoRequests();
   if ( sortBy === 'topVoted') { 
     data = data.sort((prev, next) => {
       if (

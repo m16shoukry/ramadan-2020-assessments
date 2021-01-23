@@ -1,5 +1,8 @@
-function getSingleVidReq(vidInfo) {
-    const vidReqContainerElm = document.createElement('div')
+const listOfVidsElm = document.getElementById('listOfRequests')
+
+function renderSingleVidReq(vidInfo, isPrepend = false) {
+    
+  const vidReqContainerElm = document.createElement('div')
     vidReqContainerElm.innerHTML = `
     <div class="card mb-3">
     <div class="card-body d-flex justify-content-between flex-row">
@@ -34,16 +37,76 @@ function getSingleVidReq(vidInfo) {
             </div>
           </div>
         </div>`
-        return vidReqContainerElm;
+
+        if (isPrepend) {
+          listOfVidsElm.prepend(vidReqContainerElm)
+        }
+        else {
+          listOfVidsElm.appendChild(vidReqContainerElm)
+        }
+
+
+
+  const voteUpsElm = document.getElementById(`votes_ups_${vidInfo._id}`)
+  const voteDownsElm = document.getElementById(`votes_downs_${vidInfo._id}`)
+  const scoreVoteElm = document.getElementById(`score_vote_${vidInfo._id}`)
+
+  voteUpsElm.addEventListener('click', (e) => {
+    fetch('http://localhost:7777/video-request/vote', {
+      method: 'PUT',
+      headers: { 'content-Type': 'application/json'},
+      body: JSON.stringify({ id: vidInfo._id, vote_type: 'ups'}), 
+    })
+    .then((bold) => bold.json())
+    .then((data) => {
+      scoreVoteElm.innerText = data.ups - data.downs
+    })
+  })
+
+  voteDownsElm.addEventListener('click', (e) => {
+    fetch('http://localhost:7777/video-request/vote', {
+      method: 'PUT',
+      headers: { 'content-Type': 'application/json'},
+      body: JSON.stringify({ id: vidInfo._id, vote_type: 'downs'}), 
+    })
+    .then((bold) => bold.json())
+    .then((data) => {
+      scoreVoteElm.innerText = data.ups - data.downs
+    })
+  })
+        
 }
 
 
+function loadAllVidReqs(sortBy = 'newFirst') {
+ //task 2 render list when create a new video
+ fetch(`http://localhost:7777/video-request?sortBy=${sortBy}`)
+ .then((bold) => bold.json())
+ .then((data) => {
+     data.forEach((vidInfo)=> {
+         renderSingleVidReq(vidInfo)
+     })
+ })
+}
+
+  
+//when document being ready
 document.addEventListener('DOMContentLoaded', function() {
-
     const formVidReqElm = document.getElementById('formVideoRequest')
-    const listOfVidsElm = document.getElementById('listOfRequests')
+    const sortByElms = document.querySelectorAll('[id*=sort_by_]')
 
+    //render
+    loadAllVidReqs()
     
+    sortByElms.forEach((elm) => {
+      elm.addEventListener('click', function (e) {
+        e.preventDefault()
+                      //not using arrow fun cuz of this>>to listen for elm not parent *sortByElms*
+        const sortBy = this.querySelector('input')
+        loadAllVidReqs(sortBy.value)
+      })
+    })
+
 
 
     //task1 for submission 
@@ -54,6 +117,7 @@ document.addEventListener('DOMContentLoaded', function() {
             method: 'POST',
             body: JSON.stringify({  
                 //to send in jsonformat OR u can use FormData() *browser API for manipulate and map var with data* & use multer()
+                //there is a bug here *data is not send to DB correctly*
                 author_name: formVidReqElm.author_name.value,
                 author_email: formVidReqElm.author_email.value,
                 topic_title: formVidReqElm.topic_title.value,
@@ -63,44 +127,8 @@ document.addEventListener('DOMContentLoaded', function() {
             }),
         })//fetch return a promise
         .then((bold) => bold.json())
-        .then((data) => { console.log(data) })
-    })
-
-    //task 2 render list when create a new video
-    fetch('http://localhost:7777/video-request')
-    .then((bold) => bold.json())
-    .then((data) => {
-        data.forEach((vidInfo)=> {
-            listOfVidsElm.appendChild(getSingleVidReq(vidInfo))
-            
-            //task3 votes ups&downs&score
-            const voteUpsElm = document.getElementById(`votes_ups_${vidInfo._id}`)
-            const voteDownsElm = document.getElementById(`votes_downs_${vidInfo._id}`)
-            const scoreVoteElm = document.getElementById(`score_vote_${vidInfo._id}`)
-
-            voteUpsElm.addEventListener('click', (e) => {
-              fetch('http://localhost:7777/video-request/vote', {
-                method: 'PUT',
-                headers: { 'content-Type': 'application/json'},
-                body: JSON.stringify({ id: vidInfo._id, vote_type: 'ups'}), 
-              })
-              .then((bold) => bold.json())
-              .then((data) => {
-                scoreVoteElm.innerText = data.ups - data.downs
-              })
-            })
-
-            voteDownsElm.addEventListener('click', (e) => {
-              fetch('http://localhost:7777/video-request/vote', {
-                method: 'PUT',
-                headers: { 'content-Type': 'application/json'},
-                body: JSON.stringify({ id: vidInfo._id, vote_type: 'downs'}), 
-              })
-              .then((bold) => bold.json())
-              .then((data) => {
-                scoreVoteElm.innerText = data.ups - data.downs
-              })
-            })
+        .then((data) => {
+          renderSingleVidReq(data, true)//for prepend when submit 
         })
     })
-})
+  })
