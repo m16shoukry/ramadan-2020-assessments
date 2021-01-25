@@ -78,9 +78,9 @@ function renderSingleVidReq(vidInfo, isPrepend = false) {
 }
 
 
-function loadAllVidReqs(sortBy = 'newFirst') {
+function loadAllVidReqs(sortBy = 'newFirst', searchTerm = '') {
  //task 2 render list when create a new video
- fetch(`http://localhost:7777/video-request?sortBy=${sortBy}`)
+ fetch(`http://localhost:7777/video-request?sortBy=${sortBy}&searchTerm=${searchTerm}`)
  .then((bold) => bold.json())
  .then((data) => {
      data.forEach((vidInfo)=> {
@@ -94,6 +94,7 @@ function loadAllVidReqs(sortBy = 'newFirst') {
 document.addEventListener('DOMContentLoaded', function() {
     const formVidReqElm = document.getElementById('formVideoRequest')
     const sortByElms = document.querySelectorAll('[id*=sort_by_]')
+    const searchBoxElm = document.getElementById('search_box')
 
     //render
     loadAllVidReqs()
@@ -101,12 +102,20 @@ document.addEventListener('DOMContentLoaded', function() {
     sortByElms.forEach((elm) => {
       elm.addEventListener('click', function (e) {
         e.preventDefault()
-                      //not using arrow fun cuz of this>>to listen for elm not parent *sortByElms*
+                      //use case for (this)..not using arrow fun cuz of this>>to listen for elm not parent *sortByElms*
         const sortBy = this.querySelector('input')
         loadAllVidReqs(sortBy.value)
       })
     })
 
+    searchBoxElm.addEventListener('input', (e) => {
+     const searchTerm = e.target.value
+
+     loadAllVidReqs(undefined, searchTerm)
+
+
+
+    })
 
 
     //task1 for submission 

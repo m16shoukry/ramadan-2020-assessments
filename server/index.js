@@ -6,6 +6,7 @@ const VideoRequestData = require('./data/video-requests.data');
 const UserData = require('./data/user.data');
 const cors = require('cors');
 const mongoose = require('./models/mongo.config');
+const videoRequestsData = require('./data/video-requests.data');
 
 
 if (!Object.keys(mongoose).length) return;
@@ -28,8 +29,8 @@ app.post('/video-request', async (req, res, next) => {
 });
 
 app.get('/video-request', async (req, res, next) => {
-  const { sortBy } = req.query
-  let data = await VideoRequestData.getAllVideoRequests();
+  const { sortBy, searchTerm } = req.query
+  let data
   if ( sortBy === 'topVoted') { 
     data = data.sort((prev, next) => {
       if (
@@ -40,7 +41,13 @@ app.get('/video-request', async (req, res, next) => {
       } else {
         return 1;
       }
-    });
+    })
+  }
+  if (searchTerm){
+    data = await videoRequestsData.searchRequests(searchTerm)
+  }
+  else {
+    data = await VideoRequestData.getAllVideoRequests()
   }
   res.send(data);
   next();
